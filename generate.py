@@ -14,9 +14,10 @@ from langchain.chains import LLMChain
 
 os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
+pine_cone_name = "coverletter"
+
 def get_index(filename):
     # Initialising pinecone
-    pine_cone_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
     print(pine_cone_name)
     embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
     pinecone.init(
@@ -34,7 +35,7 @@ def get_index(filename):
 
     return Pinecone.from_documents(pages, embeddings, index_name=pine_cone_name) 
 
-def generate_cover_letter(index):
+def generate_cover_letter(index,name):
     prompt_template = """Use the context below to write a cover letter:
     Context: {context}
     Cover letter:"""
@@ -42,8 +43,8 @@ def generate_cover_letter(index):
     llm = OpenAI(temperature=0.1, verbose=True)
     chain = LLMChain(llm=llm, prompt=PROMPT)
 
-    docs = index.similarity_search("Thethela", k=4)
+    docs = index.similarity_search(name, k=4)
     inputs = [{"context": doc.page_content} for doc in docs]  
     letter = chain.apply(inputs)
-
-    return letter 
+    pinecone.delete_index(pine_cone_name)
+    return letter[0]["text"]
