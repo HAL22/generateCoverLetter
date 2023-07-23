@@ -12,8 +12,6 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.vectorstores import Pinecone
 from langchain.chains import LLMChain
 
-os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-
 pine_cone_name = "coverletter"
 
 def fill_keys(openAIKey,pineconeAPIKey,pineconeEnv):
