@@ -16,18 +16,17 @@ os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 
 pine_cone_name = "coverletter"
 
+def fill_keys(openAIKey,pineconeAPIKey,pineconeEnv):
+    os.environ['OPENAI_API_KEY'] = openAIKey
+    os.environ['PINECONE_API_KEY'] = pineconeAPIKey
+    os.environ['PINECONE_ENV'] = pineconeEnv
+
 def get_index(filename):
-    # Initialising pinecone
-    print(pine_cone_name)
     embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
     pinecone.init(
-    api_key=st.secrets['PINECONE_API_KEY'],
-    environment=st.secrets['PINECONE_ENV']
+    api_key=os.getenv('PINECONE_API_KEY'),
+    environment=os.getenv('PINECONE_ENV')
     )
-
-    indexes = pinecone.list_indexes()
-    if pine_cone_name in indexes:
-        return Pinecone.from_existing_index(pine_cone_name,embeddings)
 
     pinecone.create_index(pine_cone_name, dimension=1536)
     loader = PyPDFLoader(filename)
@@ -35,16 +34,17 @@ def get_index(filename):
 
     return Pinecone.from_documents(pages, embeddings, index_name=pine_cone_name) 
 
-def generate_cover_letter(index,name):
+def generate_cover_letter(index,name,temp=0.1):
     prompt_template = """Use the context below to write a cover letter:
     Context: {context}
     Cover letter:"""
     PROMPT = PromptTemplate(template=prompt_template, input_variables=["context"])
-    llm = OpenAI(temperature=0.1, verbose=True)
+    llm = OpenAI(temperature=temp, verbose=True)
     chain = LLMChain(llm=llm, prompt=PROMPT)
 
     docs = index.similarity_search(name, k=4)
     inputs = [{"context": doc.page_content} for doc in docs]  
     letter = chain.apply(inputs)
+    
     pinecone.delete_index(pine_cone_name)
     return letter[0]["text"]
