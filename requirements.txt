@@ -1,0 +1,9 @@
+openai==0.27.8
+openapi-schema-pydantic==1.2.4
+python-dateutil==2.8.2
+tiktoken==0.4.0
+pinecone-client
+streamlit
+langchain==0.0.202
+langchainplus-sdk==0.0.10
+pypdf
